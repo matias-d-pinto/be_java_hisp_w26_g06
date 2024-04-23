@@ -1,5 +1,8 @@
-package com.sprint.socialmeli.service;
+package com.sprint.socialmeli.service.user;
 
+import org.springframework.stereotype.Service;
+
+@Service
 public class UsersServiceImpl implements IUsersService{
 
     @Override

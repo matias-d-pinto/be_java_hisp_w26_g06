@@ -1,4 +1,4 @@
-package com.sprint.socialmeli.service;
+package com.sprint.socialmeli.service.user;
 
 public interface IUsersService {
 
