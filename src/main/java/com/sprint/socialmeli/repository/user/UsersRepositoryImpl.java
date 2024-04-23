@@ -5,19 +5,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.socialmeli.entity.Customer;
 import com.sprint.socialmeli.entity.Seller;
 import com.sprint.socialmeli.entity.User;
+import com.sprint.socialmeli.exception.ConflictException;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.ResourceUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
 @Repository
 public class UsersRepositoryImpl implements IUsersRepository{
-    private List<Customer> customerList;
-    private List<Seller> sellerList;
+    private List<Customer> customerList = new ArrayList<>();
+    private List<Seller> sellerList = new ArrayList<>();
 
     public UsersRepositoryImpl() {
         loadDatabase("Customer");
@@ -38,22 +40,15 @@ public class UsersRepositoryImpl implements IUsersRepository{
                     sellerList = users.stream().map(Seller::new).toList();
             }
         } catch (FileNotFoundException e) {
-            System.out.println("Archivo no encontrado: " + e.getMessage());
+            throw new ConflictException(e.getMessage());
+            //System.out.println("Archivo no encontrado: " + e.getMessage());
         } catch (IOException e) {
             //throw new RuntimeException(e);
-            System.out.println("Error en el manejo del archivo: " + e.getMessage());
+            throw new ConflictException(e.getMessage());
+            //System.out.println("Error en el manejo del archivo: " + e.getMessage());
         }
     }
 
-    @Override
-    public void follow(Integer followerId, Integer followedId) {
-
-    }
-
-    @Override
-    public void unfollow(Integer unfollowerId, Integer unfollowedId) {
-
-    }
 
     @Override
     public List<Customer> findCustomerByPredicate(Predicate<Customer> predicate) {

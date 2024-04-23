@@ -1,5 +1,8 @@
 package com.sprint.socialmeli.controller;
 
+import com.sprint.socialmeli.entity.User;
+import com.sprint.socialmeli.service.user.IUsersService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -8,11 +11,21 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/users")
 public class UsersController {
 
+
+    private IUsersService _usersService;
+
+    public UsersController(IUsersService usersService){
+        this._usersService = usersService;
+    }
+
     // 1.
     @PostMapping("/{userId}/follow/{userIdToFollow}")
     public ResponseEntity<?> follow(
             @PathVariable("userId") Integer userId,
             @PathVariable("userIdToFollow") Integer userIdToFollow) {
+
+        _usersService.follow(userId, userIdToFollow);
+
         return new ResponseEntity<>("OK", HttpStatus.OK);
     }
 

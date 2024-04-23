@@ -15,4 +15,12 @@ public class Customer {
     public Customer(User user) {
         this.user = user;
     }
+
+    public void follow(Integer userIdToFollow){
+        followed.add(userIdToFollow);
+    }
+
+    public void unfollow(Integer userIdToFollow){
+        followed.remove(userIdToFollow);
+    }
 }

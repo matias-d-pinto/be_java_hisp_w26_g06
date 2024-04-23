@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public interface IUsersRepository {
-    void follow(Integer followerId, Integer followedId);
-    void unfollow(Integer unfollowerId, Integer unfollowedId);
     List<Customer> findCustomerByPredicate(Predicate<Customer> predicate);
     List<Seller> findSellerByPredicate(Predicate<Seller> predicate);
 }
