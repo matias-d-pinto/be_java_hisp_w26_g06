@@ -11,4 +11,5 @@ public interface IUsersService {
     FollowerCountResponseDTO getFollowersCount(Integer sellerId);
 
     FollowersResponseDTO getfollowers(Integer sellerId );
+    void unfollow(Integer userId, Integer userIdToUnfollow);
 }
