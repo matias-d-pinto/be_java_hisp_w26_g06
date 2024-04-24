@@ -6,6 +6,7 @@ import com.sprint.socialmeli.entity.Customer;
 import com.sprint.socialmeli.entity.Seller;
 import com.sprint.socialmeli.repository.user.IUsersRepository;
 import com.sprint.socialmeli.exception.*;
+import com.sprint.socialmeli.dto.user.FollowerCountResponseDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -57,7 +58,30 @@ public class UsersServiceImpl implements IUsersService{
         List<UserResponseDTO> usersDto = followers.stream().map( f -> new UserResponseDTO( f.getUser().getUserId(), f.getUser().getUserName()) ).toList();
 
         String sellerName = seller.get(0).getUser().getUserName();
-        
+
         return new FollowersResponseDTO( sellerId, sellerName, usersDto );
+    }
+
+
+    public FollowerCountResponseDTO getFollowersCount(Integer sellerId) {
+        Seller seller = _usersRepository
+                .findSellerByPredicate(s -> s.getUser().getUserId().equals(sellerId))
+                .stream().findFirst()
+                .orElseThrow( () -> new NotFoundException("Seller with ID: " + sellerId + " not found"));
+
+        Integer followersCount = (int) _usersRepository.findCustomerByPredicate(customer ->
+                        customer.getFollowed()
+                                .stream()
+                                .anyMatch(s -> s.equals(sellerId)))
+                        .stream().count();
+
+        FollowerCountResponseDTO followerCount = new FollowerCountResponseDTO(
+                sellerId,
+                seller.getUser().getUserName(),
+                followersCount
+        );
+
+        return followerCount;
+
     }
 }

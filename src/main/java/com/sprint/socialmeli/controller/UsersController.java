@@ -2,6 +2,8 @@ package com.sprint.socialmeli.controller;
 
 import com.sprint.socialmeli.dto.user.FollowersResponseDTO;
 import com.sprint.socialmeli.service.user.IUsersService;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sprint.socialmeli.dto.user.FollowerCountResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,8 +32,9 @@ public class UsersController {
 
     // 2.
     @GetMapping("/{userId}/followers/count")
-    public ResponseEntity<?> countFollowers(@PathVariable("userId") Integer userId) {
-        return new ResponseEntity<>("OK2", HttpStatus.OK);
+    public ResponseEntity<FollowerCountResponseDTO> countFollowers(@PathVariable("userId") Integer userId) {
+        FollowerCountResponseDTO followerCount = _usersService.getFollowersCount(userId);
+        return new ResponseEntity<>(followerCount, HttpStatus.OK);
     }
 
 
