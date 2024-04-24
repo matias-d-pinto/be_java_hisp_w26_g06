@@ -50,7 +50,7 @@ public class UsersController {
     // 4.
     @GetMapping("/{userId}/followed/list")
     public ResponseEntity<?> listFollowedUsers(@PathVariable("userId") Integer userId) {
-        return new ResponseEntity<>("OK4", HttpStatus.OK);
+        return new ResponseEntity<>(_usersService.listFollowedUsers(userId), HttpStatus.OK);
     }
 
     // 7.

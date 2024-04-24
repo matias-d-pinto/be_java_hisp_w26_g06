@@ -1,7 +1,6 @@
 package com.sprint.socialmeli.service.user;
 
 import com.sprint.socialmeli.dto.user.FollowersResponseDTO;
-import com.sprint.socialmeli.dto.user.FollowersResponseDTO;
 import com.sprint.socialmeli.dto.user.FollowerCountResponseDTO;
 
 
