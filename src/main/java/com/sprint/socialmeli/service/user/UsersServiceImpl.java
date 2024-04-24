@@ -1,5 +1,7 @@
 package com.sprint.socialmeli.service.user;
 
+import com.sprint.socialmeli.dto.user.FollowersResponseDTO;
+import com.sprint.socialmeli.dto.user.UserResponseDTO;
 import com.sprint.socialmeli.entity.Customer;
 import com.sprint.socialmeli.entity.Seller;
 import com.sprint.socialmeli.repository.user.IUsersRepository;
@@ -41,4 +43,21 @@ public class UsersServiceImpl implements IUsersService{
         customer.get(0).follow(sellerId);
     }
 
+    @Override
+    public FollowersResponseDTO getfollowers(Integer sellerId) {
+
+        List<Seller> seller = _usersRepository
+                .findSellerByPredicate(s -> s.getUser().getUserId().equals(sellerId));
+
+        if (seller.isEmpty()){
+            throw new NotFoundException("Seller with ID: " + sellerId + " not found");
+        }
+
+        List<Customer> followers = _usersRepository.findCustomerByPredicate( c -> c.getFollowed().contains(sellerId) );
+        List<UserResponseDTO> usersDto = followers.stream().map( f -> new UserResponseDTO( f.getUser().getUserId(), f.getUser().getUserName()) ).toList();
+
+        String sellerName = seller.get(0).getUser().getUserName();
+        
+        return new FollowersResponseDTO( sellerId, sellerName, usersDto );
+    }
 }
