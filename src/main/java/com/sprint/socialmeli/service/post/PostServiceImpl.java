@@ -1,9 +1,14 @@
 package com.sprint.socialmeli.service.post;
 
+import com.sprint.socialmeli.dto.post.FollowedProductsResponseDTO;
 import com.sprint.socialmeli.dto.post.PostDTO;
+import com.sprint.socialmeli.dto.post.PostResponseDTO;
+import com.sprint.socialmeli.dto.post.ProductDTO;
+import com.sprint.socialmeli.entity.Customer;
 import com.sprint.socialmeli.entity.Post;
 import com.sprint.socialmeli.entity.Product;
 import com.sprint.socialmeli.exception.BadRequestException;
+import com.sprint.socialmeli.exception.NotFoundException;
 import com.sprint.socialmeli.repository.post.IPostRepository;
 import com.sprint.socialmeli.repository.user.IUsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +17,8 @@ import org.springframework.stereotype.Service;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class PostServiceImpl implements IPostService {
@@ -52,4 +59,38 @@ public class PostServiceImpl implements IPostService {
             throw new BadRequestException("Formato inválido " + e.getMessage());
         }
     }
+
+    @Override
+    public FollowedProductsResponseDTO getFollowedProductsList(Integer customer_id){
+        List<Customer> customers = usersRepository
+                .findCustomerByPredicate(c -> c.getUser().getUserId().equals(customer_id));
+
+        if (customers.isEmpty()) {
+            throw new NotFoundException("Customer with ID: " + customer_id + " not found");
+        }
+
+        List<PostResponseDTO> postResponseDTOList = new ArrayList<>();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+        for (Integer sellerId : customers.get(0).getFollowed()) {
+            postResponseDTOList.addAll(postRepository.findBySellerId(sellerId)
+                    .stream().map(p -> new PostResponseDTO(
+                            sellerId,
+                            p.getId(),
+                            formatter.format(p.getPostDate()),
+                            new ProductDTO(
+                                    p.getProduct().getId(),
+                                    p.getProduct().getName(),
+                                    p.getProduct().getType(),
+                                    p.getProduct().getBrand(),
+                                    p.getProduct().getColor(),
+                                    p.getProduct().getNotes()),
+                            p.getCategory(),
+                            p.getPrice())).toList());
+        }
+
+        return new FollowedProductsResponseDTO(customer_id, postResponseDTOList);
+    }
+
 }

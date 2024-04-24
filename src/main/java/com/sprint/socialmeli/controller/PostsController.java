@@ -25,7 +25,7 @@ public class PostsController {
     // 6.
     @GetMapping("/followed/{userId}/list")
     public ResponseEntity<?> getFollowedPosts(@PathVariable Integer userId){
-        return new ResponseEntity<>("OK POST 6", HttpStatus.OK);
+        return new ResponseEntity<>(postService.getFollowedProductsList(userId), HttpStatus.OK);
     }
 
 }
