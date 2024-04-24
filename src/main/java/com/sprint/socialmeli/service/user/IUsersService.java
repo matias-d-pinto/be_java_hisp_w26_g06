@@ -11,7 +11,7 @@ public interface IUsersService {
     void follow(Integer customerId, Integer sellerId);
     FollowerCountResponseDTO getFollowersCount(Integer sellerId);
 
-    FollowersResponseDTO getfollowers(Integer sellerId );
+    FollowersResponseDTO getfollowers(Integer sellerId, String orderType);
     void unfollow(Integer userId, Integer userIdToUnfollow);
-    FollowedResponseDTO listFollowedUsers(Integer userId);
+    FollowedResponseDTO listFollowedUsers(Integer userId, String order);
 }

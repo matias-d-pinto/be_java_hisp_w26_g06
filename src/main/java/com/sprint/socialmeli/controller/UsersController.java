@@ -2,6 +2,7 @@ package com.sprint.socialmeli.controller;
 
 import com.sprint.socialmeli.dto.user.FollowersResponseDTO;
 import com.sprint.socialmeli.service.user.IUsersService;
+import com.sprint.socialmeli.utils.NameOrderType;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.sprint.socialmeli.dto.user.FollowerCountResponseDTO;
 import org.springframework.http.HttpStatus;
@@ -40,17 +41,19 @@ public class UsersController {
 
     // 3.
     @GetMapping("/{userId}/followers/list")
-    public ResponseEntity<?> listFollowers(@PathVariable("userId") Integer userId) {
+    public ResponseEntity<?> listFollowers(@PathVariable("userId") Integer userId,
+                                           @RequestParam(required = false) String order) {
 
-        FollowersResponseDTO followers = _usersService.getfollowers(userId );
+        FollowersResponseDTO followers = _usersService.getfollowers(userId, order);
 
         return new ResponseEntity<>(followers, HttpStatus.OK);
     }
 
     // 4.
     @GetMapping("/{userId}/followed/list")
-    public ResponseEntity<?> listFollowedUsers(@PathVariable("userId") Integer userId) {
-        return new ResponseEntity<>(_usersService.listFollowedUsers(userId), HttpStatus.OK);
+    public ResponseEntity<?> listFollowedUsers(@PathVariable("userId") Integer userId,
+                                               @RequestParam(required = false) String order) {
+        return new ResponseEntity<>(_usersService.listFollowedUsers(userId, order), HttpStatus.OK);
     }
 
     // 7.

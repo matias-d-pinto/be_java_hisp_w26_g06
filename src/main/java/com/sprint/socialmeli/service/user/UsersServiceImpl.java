@@ -8,8 +8,12 @@ import com.sprint.socialmeli.entity.Seller;
 import com.sprint.socialmeli.repository.user.IUsersRepository;
 import com.sprint.socialmeli.exception.*;
 import com.sprint.socialmeli.dto.user.FollowerCountResponseDTO;
+import com.sprint.socialmeli.utils.NameOrderType;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -65,13 +69,18 @@ public class UsersServiceImpl implements IUsersService{
     }
 
     @Override
-    public FollowedResponseDTO listFollowedUsers(Integer userId) {
+    public FollowedResponseDTO listFollowedUsers(Integer userId, String order) {
         List<Customer> customers = _usersRepository
                 .findCustomerByPredicate(c -> c.getUser().getUserId().equals(userId));
 
         if (customers.isEmpty()) {
             throw new NotFoundException("Customer with ID: " + userId + " not found");
         }
+
+        if(!isValidOrderType(order)){
+            throw new BadRequestException("Invalid order type: " + order);
+        }
+
 
         Customer customer = customers.get(0);
         if(customer.getFollowed().isEmpty()) {
@@ -85,11 +94,16 @@ public class UsersServiceImpl implements IUsersService{
                 .map(s -> new UserResponseDTO(s.getUser().getUserId(), s.getUser().getUserName()))
                 .collect(Collectors.toList());
 
+        if(order != null){
+            NameOrderType orderType = NameOrderType.valueOf(order.toUpperCase());
+            followed = sortList(followed, orderType);
+        }
+
         return new FollowedResponseDTO(customer.getUser().getUserId(), customer.getUser().getUserName(),followed);
     }
 
     @Override
-    public FollowersResponseDTO getfollowers(Integer sellerId) {
+    public FollowersResponseDTO getfollowers(Integer sellerId, String orderType) {
 
         List<Seller> seller = _usersRepository
                 .findSellerByPredicate(s -> s.getUser().getUserId().equals(sellerId));
@@ -98,15 +112,46 @@ public class UsersServiceImpl implements IUsersService{
             throw new NotFoundException("Seller with ID: " + sellerId + " not found");
         }
 
-        List<Customer> followers = _usersRepository.findCustomerByPredicate( c -> c.getFollowed().contains(sellerId) );
-        List<UserResponseDTO> usersDto = followers.stream().map( f -> new UserResponseDTO( f.getUser().getUserId(), f.getUser().getUserName()) ).toList();
+        if(!isValidOrderType(orderType)){
+            throw new BadRequestException("Invalid order type: " + orderType);
+        }
+
+        List<Customer> followers = _usersRepository.findCustomerByPredicate( c -> c.getFollowed().contains(sellerId));
+        List<UserResponseDTO> usersDto = followers.stream()
+                .map(f -> new UserResponseDTO( f.getUser().getUserId(), f.getUser().getUserName()))
+                .toList();
+
+        if(orderType != null){
+            NameOrderType order = NameOrderType.valueOf(orderType.toUpperCase());
+            usersDto = sortList(usersDto, order);
+        }
 
         String sellerName = seller.get(0).getUser().getUserName();
 
         return new FollowersResponseDTO( sellerId, sellerName, usersDto );
     }
 
+    private boolean isValidOrderType(String orderType) {
+        return orderType == null || Arrays.stream(NameOrderType.values())
+                .anyMatch(type -> type.name().equalsIgnoreCase(orderType));
+    }
 
+    private List<UserResponseDTO> sortList(List<UserResponseDTO> dtos, NameOrderType orderType){
+        switch (orderType){
+            case NAME_ASC:
+                return dtos.stream()
+                        .sorted(Comparator.comparing(UserResponseDTO::getUser_name))
+                        .toList();
+            case NAME_DESC:
+                return dtos.stream()
+                        .sorted(Comparator.comparing(UserResponseDTO::getUser_name, Collections.reverseOrder()))
+                        .toList();
+            default:
+                return dtos;
+        }
+    }
+
+    @Override
     public FollowerCountResponseDTO getFollowersCount(Integer sellerId) {
         Seller seller = _usersRepository
                 .findSellerByPredicate(s -> s.getUser().getUserId().equals(sellerId))
