@@ -1,5 +1,6 @@
 package com.sprint.socialmeli.controller;
 
+import com.sprint.socialmeli.dto.user.FollowedResponseDTO;
 import com.sprint.socialmeli.entity.User;
 import com.sprint.socialmeli.service.user.IUsersService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +46,8 @@ public class UsersController {
     // 4.
     @GetMapping("/{userId}/followed/list")
     public ResponseEntity<?> listFollowedUsers(@PathVariable("userId") Integer userId) {
-        return new ResponseEntity<>("OK4", HttpStatus.OK);
+        FollowedResponseDTO response = _usersService.listFollowedUsers(userId);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     // 7.

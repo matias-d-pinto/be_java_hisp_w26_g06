@@ -59,4 +59,5 @@ public class UsersRepositoryImpl implements IUsersRepository{
     public List<Seller> findSellerByPredicate(Predicate<Seller> predicate) {
         return sellerList.stream().filter(predicate).toList();
     }
+
 }
