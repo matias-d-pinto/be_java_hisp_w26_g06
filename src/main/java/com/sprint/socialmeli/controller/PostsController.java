@@ -1,7 +1,6 @@
 package com.sprint.socialmeli.controller;
 
 import com.sprint.socialmeli.dto.post.PostDTO;
-import com.sprint.socialmeli.repository.post.IPostRepository;
 import com.sprint.socialmeli.service.post.IPostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,8 +23,9 @@ public class PostsController {
 
     // 6.
     @GetMapping("/followed/{userId}/list")
-    public ResponseEntity<?> getFollowedPosts(@PathVariable Integer userId){
-        return new ResponseEntity<>(postService.getFollowedProductsList(userId), HttpStatus.OK);
+    public ResponseEntity<?> getFollowedPosts(@PathVariable Integer userId,
+                                              @RequestParam(required = false) String order){
+        return new ResponseEntity<>(postService.getFollowedProductsList(userId, order), HttpStatus.OK);
     }
 
 }

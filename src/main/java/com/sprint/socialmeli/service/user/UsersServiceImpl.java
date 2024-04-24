@@ -137,18 +137,15 @@ public class UsersServiceImpl implements IUsersService{
     }
 
     private List<UserResponseDTO> sortList(List<UserResponseDTO> dtos, NameOrderType orderType){
-        switch (orderType){
-            case NAME_ASC:
-                return dtos.stream()
-                        .sorted(Comparator.comparing(UserResponseDTO::getUser_name))
-                        .toList();
-            case NAME_DESC:
-                return dtos.stream()
-                        .sorted(Comparator.comparing(UserResponseDTO::getUser_name, Collections.reverseOrder()))
-                        .toList();
-            default:
-                return dtos;
-        }
+        return switch (orderType) {
+            case NAME_ASC -> dtos.stream()
+                    .sorted(Comparator.comparing(UserResponseDTO::getUser_name))
+                    .toList();
+            case NAME_DESC -> dtos.stream()
+                    .sorted(Comparator.comparing(UserResponseDTO::getUser_name, Collections.reverseOrder()))
+                    .toList();
+            default -> dtos;
+        };
     }
 
     @Override

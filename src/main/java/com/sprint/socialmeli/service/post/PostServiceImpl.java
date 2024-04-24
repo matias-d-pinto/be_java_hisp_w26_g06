@@ -4,6 +4,7 @@ import com.sprint.socialmeli.dto.post.FollowedProductsResponseDTO;
 import com.sprint.socialmeli.dto.post.PostDTO;
 import com.sprint.socialmeli.dto.post.PostResponseDTO;
 import com.sprint.socialmeli.dto.post.ProductDTO;
+import com.sprint.socialmeli.dto.user.UserResponseDTO;
 import com.sprint.socialmeli.entity.Customer;
 import com.sprint.socialmeli.entity.Post;
 import com.sprint.socialmeli.entity.Product;
@@ -11,14 +12,15 @@ import com.sprint.socialmeli.exception.BadRequestException;
 import com.sprint.socialmeli.exception.NotFoundException;
 import com.sprint.socialmeli.repository.post.IPostRepository;
 import com.sprint.socialmeli.repository.user.IUsersRepository;
+import com.sprint.socialmeli.utils.DateOrderType;
+import com.sprint.socialmeli.utils.NameOrderType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class PostServiceImpl implements IPostService {
@@ -61,7 +63,7 @@ public class PostServiceImpl implements IPostService {
     }
 
     @Override
-    public FollowedProductsResponseDTO getFollowedProductsList(Integer customer_id){
+    public FollowedProductsResponseDTO getFollowedProductsList(Integer customer_id, String order){
         List<Customer> customers = usersRepository
                 .findCustomerByPredicate(c -> c.getUser().getUserId().equals(customer_id));
 
@@ -69,13 +71,23 @@ public class PostServiceImpl implements IPostService {
             throw new NotFoundException("Customer with ID: " + customer_id + " not found");
         }
 
+        if(!isValidOrderType(order)){
+            throw new BadRequestException("Invalid order type: " + order);
+        }
+
+
         List<PostResponseDTO> postResponseDTOList = new ArrayList<>();
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
+
+        LocalDate now = LocalDate.now();
+        LocalDate weekPoint = now.minusWeeks(2);
         for (Integer sellerId : customers.get(0).getFollowed()) {
             postResponseDTOList.addAll(postRepository.findBySellerId(sellerId)
-                    .stream().map(p -> new PostResponseDTO(
+                    .stream()
+                    .filter(post -> post.getPostDate().isAfter(weekPoint))
+                    .map(p -> new PostResponseDTO(
                             sellerId,
                             p.getId(),
                             formatter.format(p.getPostDate()),
@@ -90,7 +102,29 @@ public class PostServiceImpl implements IPostService {
                             p.getPrice())).toList());
         }
 
+        if (order != null){
+            DateOrderType orderType = DateOrderType.valueOf(order.toUpperCase());
+            postResponseDTOList = sortList(postResponseDTOList, orderType);
+        }
+
         return new FollowedProductsResponseDTO(customer_id, postResponseDTOList);
+    }
+
+    private List<PostResponseDTO> sortList(List<PostResponseDTO> dtos, DateOrderType orderType){
+        return switch (orderType) {
+            case DATE_ASC -> dtos.stream()
+                    .sorted(Comparator.comparing(PostResponseDTO::getDate))
+                    .toList();
+            case DATE_DESC -> dtos.stream()
+                    .sorted(Comparator.comparing(PostResponseDTO::getDate, Collections.reverseOrder()))
+                    .toList();
+            default -> dtos;
+        };
+    }
+
+    private boolean isValidOrderType(String orderType) {
+        return orderType == null || Arrays.stream(DateOrderType.values())
+                .anyMatch(type -> type.name().equalsIgnoreCase(orderType));
     }
 
 }
