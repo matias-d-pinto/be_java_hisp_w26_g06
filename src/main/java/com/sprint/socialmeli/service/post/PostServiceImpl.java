@@ -4,7 +4,6 @@ import com.sprint.socialmeli.dto.post.FollowedProductsResponseDTO;
 import com.sprint.socialmeli.dto.post.PostDTO;
 import com.sprint.socialmeli.dto.post.PostResponseDTO;
 import com.sprint.socialmeli.dto.post.ProductDTO;
-import com.sprint.socialmeli.dto.user.UserResponseDTO;
 import com.sprint.socialmeli.entity.Customer;
 import com.sprint.socialmeli.entity.Post;
 import com.sprint.socialmeli.entity.Product;
@@ -13,7 +12,6 @@ import com.sprint.socialmeli.exception.NotFoundException;
 import com.sprint.socialmeli.repository.post.IPostRepository;
 import com.sprint.socialmeli.repository.user.IUsersRepository;
 import com.sprint.socialmeli.utils.DateOrderType;
-import com.sprint.socialmeli.utils.NameOrderType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

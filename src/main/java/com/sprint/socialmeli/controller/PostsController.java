@@ -14,14 +14,14 @@ public class PostsController {
     @Autowired
     IPostService postService;
 
-    // 5.
+    // US0005.
     @PostMapping("/post")
     public ResponseEntity<?> createPost(@RequestBody PostDTO post){
         this.postService.createPost(post);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    // 6.
+    // US0006.
     @GetMapping("/followed/{userId}/list")
     public ResponseEntity<?> getFollowedPosts(@PathVariable Integer userId,
                                               @RequestParam(required = false) String order){

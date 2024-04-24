@@ -17,9 +17,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 @Service
-public class UsersServiceImpl implements IUsersService{
+public class UsersServiceImpl implements IUsersService {
 
     private IUsersRepository _usersRepository;
 
@@ -31,7 +30,7 @@ public class UsersServiceImpl implements IUsersService{
     public void follow(Integer customerId, Integer sellerId) {
         Customer customer = checkAndGetUser(customerId, sellerId);
 
-        if (customer.getFollowed().stream().anyMatch(f -> f.equals(sellerId))){
+        if (customer.getFollowed().stream().anyMatch(f -> f.equals(sellerId))) {
             throw new ConflictException("The user already follows the seller: " + sellerId);
         }
 
@@ -42,14 +41,13 @@ public class UsersServiceImpl implements IUsersService{
         List<Customer> customer = _usersRepository
                 .findCustomerByPredicate(c -> c.getUser().getUserId().equals(customerId));
 
-        List<Seller> seller = _usersRepository
-                .findSellerByPredicate(s -> s.getUser().getUserId().equals(sellerId));
+        List<Seller> seller = _usersRepository.findSellerByPredicate(s -> s.getUser().getUserId().equals(sellerId));
 
-        if (customer.isEmpty()){
+        if (customer.isEmpty()) {
             throw new NotFoundException("Customer with ID: " + customerId + " not found");
         }
 
-        if (seller.isEmpty()){
+        if (seller.isEmpty()) {
             throw new NotFoundException("Seller with ID: " + sellerId + " not found");
         }
 
@@ -60,7 +58,7 @@ public class UsersServiceImpl implements IUsersService{
     public void unfollow(Integer userId, Integer userIdToUnfollow) {
         Customer customer = checkAndGetUser(userId, userIdToUnfollow);
 
-        if(customer.getFollowed().stream().noneMatch(f -> f.equals(userIdToUnfollow))){
+        if (customer.getFollowed().stream().noneMatch(f -> f.equals(userIdToUnfollow))) {
             throw new BadRequestException("The user " + userId + " doesn't follow the seller: " + userIdToUnfollow);
         }
 
@@ -77,15 +75,12 @@ public class UsersServiceImpl implements IUsersService{
             throw new NotFoundException("Customer with ID: " + userId + " not found");
         }
 
-        if(!isValidOrderType(order)){
+        if (!isValidOrderType(order)) {
             throw new BadRequestException("Invalid order type: " + order);
         }
 
-
         Customer customer = customers.get(0);
-        if(customer.getFollowed().isEmpty()) {
-            throw new NotFoundException("Customer with ID: " + userId + " has not followed any seller");
-        }
+
         List<Seller> followedSellers = _usersRepository
                 .findSellerByPredicate(s -> customer.getFollowed().contains(s.getUser().getUserId()));
 
@@ -94,56 +89,57 @@ public class UsersServiceImpl implements IUsersService{
                 .map(s -> new UserResponseDTO(s.getUser().getUserId(), s.getUser().getUserName()))
                 .collect(Collectors.toList());
 
-        if(order != null){
+        if (order != null) {
             NameOrderType orderType = NameOrderType.valueOf(order.toUpperCase());
             followed = sortList(followed, orderType);
         }
 
-        return new FollowedResponseDTO(customer.getUser().getUserId(), customer.getUser().getUserName(),followed);
+        return new FollowedResponseDTO(customer.getUser().getUserId(), customer.getUser().getUserName(), followed);
     }
 
     @Override
     public FollowersResponseDTO getfollowers(Integer sellerId, String orderType) {
 
-        List<Seller> seller = _usersRepository
-                .findSellerByPredicate(s -> s.getUser().getUserId().equals(sellerId));
+        Seller seller = _usersRepository
+                .findSellerByPredicate(s -> s.getUser().getUserId().equals(sellerId))
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("Seller with ID: " + sellerId + " not found"));
 
-        if (seller.isEmpty()){
-            throw new NotFoundException("Seller with ID: " + sellerId + " not found");
-        }
 
-        if(!isValidOrderType(orderType)){
+        if (!isValidOrderType(orderType)) {
             throw new BadRequestException("Invalid order type: " + orderType);
         }
 
-        List<Customer> followers = _usersRepository.findCustomerByPredicate( c -> c.getFollowed().contains(sellerId));
-        List<UserResponseDTO> usersDto = followers.stream()
-                .map(f -> new UserResponseDTO( f.getUser().getUserId(), f.getUser().getUserName()))
+        List<Customer> followers = _usersRepository.findCustomerByPredicate(c -> c.getFollowed().contains(sellerId));
+        List<UserResponseDTO> usersDto = followers
+                .stream()
+                .map(f -> new UserResponseDTO(f.getUser().getUserId(), f.getUser().getUserName()))
                 .toList();
 
-        if(orderType != null){
+        if (orderType != null) {
             NameOrderType order = NameOrderType.valueOf(orderType.toUpperCase());
             usersDto = sortList(usersDto, order);
         }
 
-        String sellerName = seller.get(0).getUser().getUserName();
+        String sellerName = seller.getUser().getUserName();
 
-        return new FollowersResponseDTO( sellerId, sellerName, usersDto );
+        return new FollowersResponseDTO(sellerId, sellerName, usersDto);
     }
 
     private boolean isValidOrderType(String orderType) {
-        return orderType == null || Arrays.stream(NameOrderType.values())
-                .anyMatch(type -> type.name().equalsIgnoreCase(orderType));
+        return orderType == null
+                || Arrays.stream(NameOrderType.values()).anyMatch(type -> type.name().equalsIgnoreCase(orderType));
     }
 
-    private List<UserResponseDTO> sortList(List<UserResponseDTO> dtos, NameOrderType orderType){
+    private List<UserResponseDTO> sortList(List<UserResponseDTO> dtos, NameOrderType orderType) {
         return switch (orderType) {
-            case NAME_ASC -> dtos.stream()
-                    .sorted(Comparator.comparing(UserResponseDTO::getUser_name))
-                    .toList();
-            case NAME_DESC -> dtos.stream()
-                    .sorted(Comparator.comparing(UserResponseDTO::getUser_name, Collections.reverseOrder()))
-                    .toList();
+            case NAME_ASC -> dtos.stream().sorted(Comparator.comparing(UserResponseDTO::getUser_name)).toList();
+            case NAME_DESC ->
+                    dtos
+                        .stream()
+                        .sorted(Comparator.comparing(UserResponseDTO::getUser_name, Collections.reverseOrder()))
+                        .toList();
             default -> dtos;
         };
     }
@@ -152,14 +148,16 @@ public class UsersServiceImpl implements IUsersService{
     public FollowerCountResponseDTO getFollowersCount(Integer sellerId) {
         Seller seller = _usersRepository
                 .findSellerByPredicate(s -> s.getUser().getUserId().equals(sellerId))
-                .stream().findFirst()
-                .orElseThrow( () -> new NotFoundException("Seller with ID: " + sellerId + " not found"));
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("Seller with ID: " + sellerId + " not found"));
 
-        Integer followersCount = (int) _usersRepository.findCustomerByPredicate(customer ->
-                        customer.getFollowed()
-                                .stream()
-                                .anyMatch(s -> s.equals(sellerId)))
-                        .stream().count();
+        Integer followersCount = (int) _usersRepository
+                .findCustomerByPredicate(customer -> customer.getFollowed()
+                        .stream()
+                        .anyMatch(s -> s.equals(sellerId)))
+                .stream()
+                .count();
 
         FollowerCountResponseDTO followerCount = new FollowerCountResponseDTO(
                 sellerId,

@@ -41,11 +41,8 @@ public class UsersRepositoryImpl implements IUsersRepository{
             }
         } catch (FileNotFoundException e) {
             throw new ConflictException(e.getMessage());
-            //System.out.println("Archivo no encontrado: " + e.getMessage());
         } catch (IOException e) {
-            //throw new RuntimeException(e);
             throw new ConflictException(e.getMessage());
-            //System.out.println("Error en el manejo del archivo: " + e.getMessage());
         }
     }
 
