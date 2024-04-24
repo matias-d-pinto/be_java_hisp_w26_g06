@@ -20,6 +20,16 @@ public class UsersServiceImpl implements IUsersService{
 
     @Override
     public void follow(Integer customerId, Integer sellerId) {
+        Customer customer = checkAndGetUser(customerId, sellerId);
+
+        if (customer.getFollowed().stream().anyMatch(f -> f.equals(sellerId))){
+            throw new ConflictException("The user already follows the seller: " + sellerId);
+        }
+
+        customer.follow(sellerId);
+    }
+
+    private Customer checkAndGetUser(Integer customerId, Integer sellerId) {
         List<Customer> customer = _usersRepository
                 .findCustomerByPredicate(c -> c.getUser().getUserId().equals(customerId));
 
@@ -34,11 +44,18 @@ public class UsersServiceImpl implements IUsersService{
             throw new NotFoundException("Seller with ID: " + sellerId + " not found");
         }
 
-        if (customer.get(0).getFollowed().stream().anyMatch(f -> f.equals(sellerId))){
-            throw new ConflictException("The user already follows the seller: " + sellerId);
+        return customer.get(0);
+    }
+
+    @Override
+    public void unfollow(Integer userId, Integer userIdToUnfollow) {
+        Customer customer = checkAndGetUser(userId, userIdToUnfollow);
+
+        if(customer.getFollowed().stream().noneMatch(f -> f.equals(userIdToUnfollow))){
+            throw new BadRequestException("The user " + userId + " doesn't follow the seller: " + userIdToUnfollow);
         }
 
-        customer.get(0).follow(sellerId);
+        customer.unfollow(userIdToUnfollow);
     }
 
 }
