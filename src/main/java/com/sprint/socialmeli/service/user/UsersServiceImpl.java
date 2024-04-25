@@ -11,6 +11,8 @@ import com.sprint.socialmeli.dto.user.FollowerCountResponseDTO;
 import com.sprint.socialmeli.utils.NameOrderType;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -38,11 +40,12 @@ public class UsersServiceImpl implements IUsersService {
     public void follow(Integer customerId, Integer sellerId) {
         Customer customer = checkAndGetUser(customerId, sellerId);
 
-        if (customer.getFollowed().stream().anyMatch(f -> f.equals(sellerId))) {
-            throw new ConflictException("The user already follows the seller: " + sellerId);
+        if( customer.getFollowed().containsKey(sellerId) ){
+            throw  new ConflictException("The user already follows the seller: " + sellerId);
         }
 
-        customer.follow(sellerId);
+        LocalDate now = LocalDate.now();
+        customer.follow(sellerId, now);
     }
 
     /**
@@ -82,10 +85,9 @@ public class UsersServiceImpl implements IUsersService {
     public void unfollow(Integer userId, Integer userIdToUnfollow) {
         Customer customer = checkAndGetUser(userId, userIdToUnfollow);
 
-        if (customer.getFollowed().stream().noneMatch(f -> f.equals(userIdToUnfollow))) {
+        if( customer.getFollowed().get(userIdToUnfollow) == null ) {
             throw new BadRequestException("The user " + userId + " doesn't follow the seller: " + userIdToUnfollow);
         }
-
 
         customer.unfollow(userIdToUnfollow);
     }
@@ -116,7 +118,7 @@ public class UsersServiceImpl implements IUsersService {
         Customer customer = customers.get(0);
 
         List<Seller> followedSellers = _usersRepository
-                .findSellerByPredicate(s -> customer.getFollowed().contains(s.getUser().getUserId()));
+                .findSellerByPredicate(s -> customer.getFollowed().get(s.getUser().getUserId()) != null);
 
         List<UserResponseDTO> followed = followedSellers
                 .stream()
@@ -155,7 +157,7 @@ public class UsersServiceImpl implements IUsersService {
             throw new BadRequestException("Invalid order type: " + orderType);
         }
 
-        List<Customer> followers = _usersRepository.findCustomerByPredicate(c -> c.getFollowed().contains(sellerId));
+        List<Customer> followers = _usersRepository.findCustomerByPredicate(c -> c.getFollowed().get(sellerId) != null );
         List<UserResponseDTO> usersDto = followers
                 .stream()
                 .map(f -> new UserResponseDTO(f.getUser().getUserId(), f.getUser().getUserName()))
@@ -208,18 +210,35 @@ public class UsersServiceImpl implements IUsersService {
      * Get the count of follows of the customers and matches with seller id
      */
     @Override
-    public FollowerCountResponseDTO getFollowersCount(Integer sellerId) {
+    public FollowerCountResponseDTO getFollowersCount(Integer sellerId, String dateSince, String dateTo) {
         Seller seller = _usersRepository
                 .findSellerByPredicate(s -> s.getUser().getUserId().equals(sellerId))
                 .stream()
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Seller with ID: " + sellerId + " not found"));
 
-        Integer followersCount = _usersRepository
-                .findCustomerByPredicate(customer -> customer.getFollowed()
-                        .stream()
-                        .anyMatch(s -> s.equals(sellerId)))
-                .size();
+        Integer followersCount = 0;
+        if( dateSince == null && dateTo == null ) {
+            followersCount = _usersRepository
+                    .findCustomerByPredicate(customer -> customer.getFollowed()
+                            .get(sellerId) != null )
+                    .size();
+        } else if ( dateSince.isEmpty() || dateTo.isEmpty() ) {
+            throw new BadRequestException("Invalid date");
+        }else {
+            LocalDate dateSinceFormatter = LocalDate.parse(dateSince, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            LocalDate dateToFormatter = LocalDate.parse(dateTo, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            followersCount = _usersRepository
+                    .findCustomerByPredicate(customer -> {
+                        LocalDate date = customer.getFollowed()
+                                .get(sellerId);
+                        return date != null &&
+                                !date.isBefore( dateSinceFormatter ) &&
+                                !date.isAfter( dateToFormatter );
+                    } )
+                    .size();
+        }
+
 
         return new FollowerCountResponseDTO(
                 sellerId,

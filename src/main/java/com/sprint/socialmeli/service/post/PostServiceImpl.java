@@ -101,7 +101,7 @@ public class PostServiceImpl implements IPostService {
 
         LocalDate now = LocalDate.now();
         LocalDate weekPoint = now.minusWeeks(2);
-        for (Integer sellerId : customers.get(0).getFollowed()) {
+        for (Integer sellerId : customers.get(0).getFollowed().keySet()) {
             postResponseDTOList.addAll(postRepository.findBySellerId(sellerId)
                     .stream()
                     .filter(post -> post.getPostDate().isAfter(weekPoint))

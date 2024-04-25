@@ -42,8 +42,8 @@ public class UsersController {
      * Calls userService to get the followers count from specified user
      */
     @GetMapping("/{userId}/followers/count")
-    public ResponseEntity<FollowerCountResponseDTO> countFollowers(@PathVariable("userId") Integer userId) {
-        FollowerCountResponseDTO followerCount = _usersService.getFollowersCount(userId);
+    public ResponseEntity<FollowerCountResponseDTO> countFollowers(@PathVariable("userId") Integer userId, @RequestParam(required = false) String dateSince, @RequestParam(required = false) String dateTo) {
+        FollowerCountResponseDTO followerCount = _usersService.getFollowersCount(userId, dateSince, dateTo);
         return new ResponseEntity<>(followerCount, HttpStatus.OK);
     }
 
