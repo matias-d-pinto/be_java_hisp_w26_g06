@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Data
-public class Customer {
+public class Customer implements IFollower{
     private Map<Integer, LocalDate> followed = new HashMap<>();
     private User user;
 
@@ -26,10 +26,10 @@ public class Customer {
 
     /**
      *
-     * @param userIdToFollow seller id
+     * @param userIdToUnfollow seller id
      * remove the seller id from the followed list
      */
-    public void unfollow(Integer userIdToFollow){
-        followed.remove(userIdToFollow);
+    public void unfollow(Integer userIdToUnfollow){
+        followed.remove(userIdToUnfollow);
     }
 }

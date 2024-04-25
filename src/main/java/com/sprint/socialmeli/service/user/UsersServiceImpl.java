@@ -4,6 +4,7 @@ import com.sprint.socialmeli.dto.user.FollowersResponseDTO;
 import com.sprint.socialmeli.dto.user.UserResponseDTO;
 import com.sprint.socialmeli.dto.user.FollowedResponseDTO;
 import com.sprint.socialmeli.entity.Customer;
+import com.sprint.socialmeli.entity.IFollower;
 import com.sprint.socialmeli.entity.Seller;
 import com.sprint.socialmeli.repository.user.IUsersRepository;
 import com.sprint.socialmeli.exception.*;
@@ -13,10 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,47 +28,53 @@ public class UsersServiceImpl implements IUsersService {
 
     /**
      *
-     * @param customerId Customer id
+     * @param userId Customer id
      * @param sellerId Seller id
      * @throws ConflictException when a customer already follows the seller
      * Checks if the users exists, and if the user already follows the seller only then
      * calls the follow method from customer.
      */
     @Override
-    public void follow(Integer customerId, Integer sellerId) {
-        Customer customer = checkAndGetUser(customerId, sellerId);
+    public void follow(Integer userId, Integer sellerId) {
+        IFollower follower = checkAndGetUser(userId, sellerId);
 
-        if( customer.getFollowed().containsKey(sellerId) ){
+        if( follower.getFollowed().containsKey(sellerId) ){
             throw  new ConflictException("The user already follows the seller: " + sellerId);
         }
 
         LocalDate now = LocalDate.now();
-        customer.follow(sellerId, now);
+        follower.follow(sellerId, now);
     }
 
     /**
      *
-     * @param customerId Customer id
+     * @param userId Customer id
      * @param sellerId Seller id
      * @return a Customer entity
      * @throws NotFoundException if any of the users not exists in the repository
      * Checks if the users exists in the repository
      */
-    private Customer checkAndGetUser(Integer customerId, Integer sellerId) {
-        List<Customer> customer = _usersRepository
-                .findCustomerByPredicate(c -> c.getUser().getUserId().equals(customerId));
-
-        List<Seller> seller = _usersRepository.findSellerByPredicate(s -> s.getUser().getUserId().equals(sellerId));
-
-        if (customer.isEmpty()) {
-            throw new NotFoundException("Customer with ID: " + customerId + " not found");
+    private IFollower checkAndGetUser(Integer userId, Integer sellerId) {
+        if(Objects.equals(userId, sellerId)){
+            throw new BadRequestException("Ids should be different");
         }
 
-        if (seller.isEmpty()) {
-            throw new NotFoundException("Seller with ID: " + sellerId + " not found");
+        IFollower resp = _usersRepository
+                .findCustomerByPredicate(c -> c.getUser().getUserId().equals(userId)).stream()
+                .findFirst().orElse(null);
+
+        _usersRepository.findSellerByPredicate(s -> s.getUser().getUserId().equals(sellerId))
+                .stream().findFirst()
+                .orElseThrow(() -> new NotFoundException("Seller with ID: " + userId + " not found"));
+
+        if (resp == null) {
+            resp = _usersRepository.findSellerByPredicate(s -> s.getUser().getUserId().equals(userId))
+                    .stream().findFirst()
+                    .orElseThrow(() -> new NotFoundException("User with ID: " + userId + " not found"));
         }
 
-        return customer.get(0);
+
+        return resp;
     }
 
     /**
@@ -83,13 +87,13 @@ public class UsersServiceImpl implements IUsersService {
      */
     @Override
     public void unfollow(Integer userId, Integer userIdToUnfollow) {
-        Customer customer = checkAndGetUser(userId, userIdToUnfollow);
+        IFollower follower = checkAndGetUser(userId, userIdToUnfollow);
 
-        if( customer.getFollowed().get(userIdToUnfollow) == null ) {
+        if( follower.getFollowed().get(userIdToUnfollow) == null ) {
             throw new BadRequestException("The user " + userId + " doesn't follow the seller: " + userIdToUnfollow);
         }
 
-        customer.unfollow(userIdToUnfollow);
+        follower.unfollow(userIdToUnfollow);
     }
 
     /**
