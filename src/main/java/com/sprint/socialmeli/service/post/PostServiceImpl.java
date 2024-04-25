@@ -12,6 +12,7 @@ import com.sprint.socialmeli.exception.NotFoundException;
 import com.sprint.socialmeli.repository.post.IPostRepository;
 import com.sprint.socialmeli.repository.user.IUsersRepository;
 import com.sprint.socialmeli.utils.DateOrderType;
+import com.sprint.socialmeli.utils.UserChecker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -36,15 +37,9 @@ public class PostServiceImpl implements IPostService {
      */
     @Override
     public void createPost(PostDTO postDTO) {
-        boolean userNotFound = this.usersRepository
-                .findSellerByPredicate(c -> c.getUser().getUserId().equals(postDTO.getUser_id()))
-                .isEmpty();
-        if(userNotFound){
-            throw new BadRequestException("Seller with id: "+ postDTO.getUser_id() +" does not exist");
-        } else{
-            Post newPost = parsePostDTO(postDTO);
-            this.postRepository.save(newPost, postDTO.getUser_id());
-        }
+        UserChecker.checkAndGetSeller(postDTO.getUser_id());
+        Post newPost = parsePostDTO(postDTO);
+        this.postRepository.save(newPost, postDTO.getUser_id());
     }
 
     /**
@@ -82,12 +77,7 @@ public class PostServiceImpl implements IPostService {
      */
     @Override
     public FollowedProductsResponseDTO getFollowedProductsList(Integer customer_id, String order){
-        List<Customer> customers = usersRepository
-                .findCustomerByPredicate(c -> c.getUser().getUserId().equals(customer_id));
-
-        if (customers.isEmpty()) {
-            throw new NotFoundException("Customer with ID: " + customer_id + " not found");
-        }
+        Customer customer = UserChecker.checkAndGetCustomer(customer_id);
 
         if(!isValidOrderType(order)){
             throw new BadRequestException("Invalid order type: " + order);
@@ -101,7 +91,7 @@ public class PostServiceImpl implements IPostService {
 
         LocalDate now = LocalDate.now();
         LocalDate weekPoint = now.minusWeeks(2);
-        for (Integer sellerId : customers.get(0).getFollowed()) {
+        for (Integer sellerId : customer.getFollowed()) {
             postResponseDTOList.addAll(postRepository.findBySellerId(sellerId)
                     .stream()
                     .filter(post -> post.getPostDate().isAfter(weekPoint))
