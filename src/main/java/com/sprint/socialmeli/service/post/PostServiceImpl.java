@@ -36,10 +36,12 @@ public class PostServiceImpl implements IPostService {
      * Checks if the seller exists and calls the post repository to save the new post
      */
     @Override
-    public void createPost(PostDTO postDTO) {
+    public Integer createPost(PostDTO postDTO) {
         UserChecker.checkAndGetSeller(postDTO.getUser_id());
         Post newPost = parsePostDTO(postDTO);
         this.postRepository.save(newPost, postDTO.getUser_id());
+
+        return newPost.getId();
     }
 
     /**
