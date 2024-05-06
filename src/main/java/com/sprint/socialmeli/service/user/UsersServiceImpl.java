@@ -10,7 +10,6 @@ import com.sprint.socialmeli.repository.user.IUsersRepository;
 import com.sprint.socialmeli.exception.*;
 import com.sprint.socialmeli.dto.user.FollowerCountResponseDTO;
 import com.sprint.socialmeli.utils.NameOrderType;
-import com.sprint.socialmeli.utils.UserChecker;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -41,8 +40,8 @@ public class UsersServiceImpl implements IUsersService {
     @Override
     public void follow(Integer customerId, Integer sellerId) {
 
-        Customer customer = UserChecker.checkAndGetCustomer(customerId);
-        UserChecker.checkAndGetSeller(sellerId);
+        Customer customer = this.checkAndGetCustomer(customerId);
+        this.checkAndGetSeller(sellerId);
 
         if (customer.getFollowed().stream().anyMatch(f -> f.equals(sellerId))) {
             throw new ConflictException("The user already follows the seller: " + sellerId);
@@ -62,8 +61,8 @@ public class UsersServiceImpl implements IUsersService {
     @Override
     public void unfollow(Integer userId, Integer userIdToUnfollow) {
 
-        Customer customer = UserChecker.checkAndGetCustomer(userId);
-        UserChecker.checkAndGetSeller(userIdToUnfollow);
+        Customer customer = this.checkAndGetCustomer(userId);
+        this.checkAndGetSeller(userIdToUnfollow);
 
         if (customer.getFollowed().stream().noneMatch(f -> f.equals(userIdToUnfollow))) {
             throw new BadRequestException("The user " + userId + " doesn't follow the seller: " + userIdToUnfollow);
@@ -84,7 +83,7 @@ public class UsersServiceImpl implements IUsersService {
      */
     @Override
     public FollowedResponseDTO listFollowedUsers(Integer userId, String order) {
-        Customer customer = UserChecker.checkAndGetCustomer(userId);
+        Customer customer = this.checkAndGetCustomer(userId);
 
         if (!isValidOrderType(order)) {
             throw new BadRequestException("Invalid order type: " + order);
@@ -119,7 +118,7 @@ public class UsersServiceImpl implements IUsersService {
     @Override
     public FollowersResponseDTO getFollowers(Integer sellerId, String orderType) {
 
-        Seller seller = UserChecker.checkAndGetSeller(sellerId);
+        Seller seller = this.checkAndGetSeller(sellerId);
 
         if (!isValidOrderType(orderType)) {
             throw new BadRequestException("Invalid order type: " + orderType);
@@ -178,7 +177,7 @@ public class UsersServiceImpl implements IUsersService {
     @Override
     public FollowerCountResponseDTO getFollowersCount(Integer sellerId) {
 
-        Seller seller = UserChecker.checkAndGetSeller(sellerId);
+        Seller seller = this.checkAndGetSeller(sellerId);
 
         Integer followersCount = usersRepository
                 .findCustomerByPredicate(customer -> customer.getFollowed()
@@ -188,5 +187,43 @@ public class UsersServiceImpl implements IUsersService {
 
         return mapUserToFollowerCountDto(seller, followersCount);
 
+    }
+
+    // ------- Refactor
+
+    /**
+     *
+     * @param sellerId Seller id
+     * @return a Seller entity
+     * @throws NotFoundException if any of the users not exists in the repository
+     * Checks if the users exists in the repository
+     */
+    public Seller checkAndGetSeller(Integer sellerId) {
+        Seller seller = usersRepository
+                .findSellerById(sellerId);
+
+        if (seller == null) {
+            throw new NotFoundException("Seller with ID: " + sellerId + " not found");
+        }
+
+        return seller;
+    }
+
+    /**
+     *
+     * @param customerId Customer id
+     * @return a Customer entity
+     * @throws NotFoundException if any of the users not exists in the repository
+     * Checks if the users exists in the repository
+     */
+    public Customer checkAndGetCustomer(Integer customerId) {
+        Customer customer = usersRepository
+                .findCustomerById(customerId);
+
+        if (customer == null) {
+            throw new NotFoundException("Customer with ID: " + customerId + " not found");
+        }
+
+        return customer;
     }
 }
