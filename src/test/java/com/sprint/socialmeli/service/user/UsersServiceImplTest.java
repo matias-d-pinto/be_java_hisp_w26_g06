@@ -121,6 +121,12 @@ class UsersServiceImplTest {
         testFollowersAreCorrectlyOrdered("name_asc");
     }
 
+    @Test
+    @DisplayName("No order type returns follower list in default order")
+    public void testOrderFollowersDefaultOrder() {
+        testFollowersAreCorrectlyOrdered(null);
+    }
+
     private void testFollowersAreCorrectlyOrdered(String order) {
         //Arrange
         Integer sellerId = 1;
@@ -130,10 +136,12 @@ class UsersServiceImplTest {
                 new Customer(new User(103, "Alfredo"))
         ));
 
-        if(order.equals("name_asc")) {
-            followersList.sort(Comparator.comparing(customer -> customer.getUser().getUserName()));
-        } else if(order.equals("name_desc")) {
-            followersList.sort(Comparator.comparing(customer -> customer.getUser().getUserName(), Comparator.reverseOrder()));
+        if (order != null) {
+            if (order.equals("name_asc")) {
+                followersList.sort(Comparator.comparing(customer -> customer.getUser().getUserName()));
+            } else if (order.equals("name_desc")) {
+                followersList.sort(Comparator.comparing(customer -> customer.getUser().getUserName(), Comparator.reverseOrder()));
+            }
         }
 
         List<UserResponseDTO> expected = followersList
@@ -163,6 +171,12 @@ class UsersServiceImplTest {
         testFollowedAreCorrectlyOrdered("name_desc");
     }
 
+    @Test
+    @DisplayName("No order type returns followed list in default order")
+    public void testNoOrderTypeDefaultOrder() {
+        testFollowedAreCorrectlyOrdered(null);
+    }
+
     private void testFollowedAreCorrectlyOrdered(String order) {
         //Arrange
         Integer customerId = 101;
@@ -172,10 +186,12 @@ class UsersServiceImplTest {
                 new Seller(new User(3, "Francisco"))
         ));
 
-        if(order.equals("name_asc")) {
-            followedList.sort(Comparator.comparing(customer -> customer.getUser().getUserName()));
-        } else if(order.equals("name_desc")) {
-            followedList.sort(Comparator.comparing(customer -> customer.getUser().getUserName(), Comparator.reverseOrder()));
+        if (order != null) {
+            if (order.equals("name_asc")) {
+                followedList.sort(Comparator.comparing(customer -> customer.getUser().getUserName()));
+            } else if (order.equals("name_desc")) {
+                followedList.sort(Comparator.comparing(customer -> customer.getUser().getUserName(), Comparator.reverseOrder()));
+            }
         }
 
         List<UserResponseDTO> expected = followedList
