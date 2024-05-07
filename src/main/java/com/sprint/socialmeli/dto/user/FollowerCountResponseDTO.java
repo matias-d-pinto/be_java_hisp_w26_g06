@@ -1,10 +1,12 @@
 package com.sprint.socialmeli.dto.user;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.io.Serializable;
 
 @Getter
+@EqualsAndHashCode
 public class FollowerCountResponseDTO extends UserResponseDTO implements Serializable {
     private final Integer follower_count;
 
