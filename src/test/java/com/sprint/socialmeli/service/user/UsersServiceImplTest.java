@@ -6,6 +6,7 @@ import com.sprint.socialmeli.entity.Customer;
 import com.sprint.socialmeli.entity.Seller;
 import com.sprint.socialmeli.entity.User;
 import com.sprint.socialmeli.exception.BadRequestException;
+import com.sprint.socialmeli.exception.NotFoundException;
 import com.sprint.socialmeli.mappers.UserMapper;
 import com.sprint.socialmeli.repository.user.IUsersRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -29,6 +30,43 @@ class UsersServiceImplTest {
 
     @InjectMocks
     UsersServiceImpl usersService;
+
+
+    // Verify user to follow exists - T-0001
+
+    // ------ Good case ------
+    @Test
+    @DisplayName("User to follow exist")
+    public void userToFollowExist() {
+        // Arrange
+        Integer customerId = 101;
+        Integer sellerId = 1;
+        Seller seller = new Seller(new User(sellerId, "Tesla 2"));
+        Customer customer = new Customer(new User(customerId, "Tesla 1"));
+
+        // Act and Assert
+        Mockito.when(usersRepository.findSellerById(sellerId)).thenReturn(seller);
+        Mockito.when(usersRepository.findCustomerById(customerId)).thenReturn(customer);
+
+        assertDoesNotThrow(() -> usersService.follow(customerId, sellerId));
+    }
+
+    // ------ Bad case ------
+    @Test
+    @DisplayName("User to follow does not exist")
+    public void userToFollowDoesNotExist() {
+        // Arrange
+        Integer customerId = 101;
+        Integer sellerId = 1;
+        Customer customer = new Customer(new User(customerId, "Tesla 1"));
+
+        // Act and Assert
+        Mockito.when(usersRepository.findSellerById(sellerId)).thenReturn(null);
+        Mockito.when(usersRepository.findCustomerById(customerId)).thenReturn(customer);
+
+        assertThrows(NotFoundException.class, () -> usersService.follow(customerId, sellerId));
+    }
+
 
     // Order by name unit tests - T-0003 -----------------START
 
