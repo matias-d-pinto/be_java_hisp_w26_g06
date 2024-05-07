@@ -147,7 +147,7 @@ class PostServiceImplTest {
         this.verifyCorrectOrderByDate(postsResponse, DateOrderType.DATE_DESC);
     }
 
-    // Reusable method for T-0003 good case
+    // Reusable method for T-0006 good case
     private void verifyCorrectOrderByDate(List<PostResponseDTO> postsResponse, DateOrderType order) {
         // Arrange
         // Customer
@@ -187,9 +187,7 @@ class PostServiceImplTest {
         FollowedProductsResponseDTO response = this.postService.getFollowedProductsList(customerId, order.toString());
 
         // Assertion
-        System.out.println(response.getPosts());
         assertEquals(2, response.getPosts().size());
-        System.out.println(postsResponse.get(0).getPost_id() + " " + response.getPosts().get(0).getPost_id());
         assertEquals(postsResponse, response.getPosts());
     }
     // -------------------------- T-0006 -------------------END
