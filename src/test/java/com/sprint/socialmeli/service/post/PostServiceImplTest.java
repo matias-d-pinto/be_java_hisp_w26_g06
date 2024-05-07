@@ -13,6 +13,8 @@ import com.sprint.socialmeli.exception.BadRequestException;
 import com.sprint.socialmeli.repository.post.IPostRepository;
 import com.sprint.socialmeli.service.user.IUsersService;
 import com.sprint.socialmeli.utils.DateOrderType;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -38,22 +41,103 @@ class PostServiceImplTest {
     @InjectMocks
     PostServiceImpl postService;
 
-    // Order by date unit tests - T-0005 -----------------START
+    Seller seller;
+    Customer customer;
+    List<Customer> customerList;
+    List<Seller> sellerList;
 
+    PostResponseDTO postResponseDTO_1;
+    PostResponseDTO postResponseDTO_2;
+    static List<Post> posts;
+    static List<Post> postsLastTwoWeeks;
+
+    @BeforeEach
+    void setUp() {
+        Integer sellerId = 1;
+        Integer customerId = 101;
+        seller = new Seller(new User(sellerId, "Martin"));
+        customer = new Customer(new User(customerId, "Antonio"));
+
+        customerList = new ArrayList<>(List.of(
+                customer,
+                new Customer(new User(102, "Nicolas"))
+        ));
+        sellerList = new ArrayList<>(List.of(
+                seller,
+                new Seller(new User(2, "Amanda")),
+                new Seller(new User(3, "Francisco"))
+        ));
+
+        postResponseDTO_1 = new PostResponseDTO(101, 1, "8-05-2024",
+                new ProductDTO(
+                        2,
+                        "Silla Interior",
+                        "Exterior",
+                        "Racer",
+                        "Red and Black",
+                        ""
+                ), 1, 220.8);
+        postResponseDTO_2 = new PostResponseDTO(101, 0, "10-05-2024",
+                        new ProductDTO(
+                                1,
+                                "Silla exterior",
+                                "Exterior",
+                                "Racer",
+                                "Red and Black",
+                                ""
+                        ), 1, 120.1);
+    }
+
+    @BeforeAll
+    static void setUpBeforeClass() {
+        posts = List.of(
+                new Post(
+                        new Product(
+                                1,
+                                "Silla exterior",
+                                "Exterior",
+                                "Racer",
+                                "Red and Black",
+                                ""
+                        ), LocalDate.of(2024, 5,10), 1, 120.1
+                ),
+                new Post(
+                        new Product(
+                                2,
+                                "Silla Interior",
+                                "Exterior",
+                                "Racer",
+                                "Red and Black",
+                                ""
+                        ), LocalDate.of(2024, 5, 8), 1, 220.8
+                )
+        );
+        postsLastTwoWeeks = List.of(
+                new Post(
+                        new Product(
+                                1,
+                                "Silla exterior",
+                                "Exterior",
+                                "Racer",
+                                "Red and Black",
+                                ""
+                        ), LocalDate.now().minusWeeks(1), 1, 120.1
+                )
+        );
+    }
+
+    // Order by date unit tests - T-0005 -----------------START
     // ---- Bad case ------
     @Test
     @DisplayName("Date order type does not exist")
     void orderTypeDoesNotExists() {
         // Arrange
-        Integer customerId = 101;
         String order = "asd"; // Random string
 
-        Customer customer = new Customer(new User(customerId, "Roberto"));
-
         // Act & assert
-        Mockito.when(usersService.checkAndGetCustomer(customerId)).thenReturn(customer);
+        Mockito.when(usersService.checkAndGetCustomer(customer.getUser().getUserId())).thenReturn(customer);
 
-        assertThrows(BadRequestException.class, () -> this.postService.getFollowedProductsList(customerId, order));
+        assertThrows(BadRequestException.class, () -> this.postService.getFollowedProductsList(customer.getUser().getUserId(), order));
     }
 
     // ---- Good case ------
@@ -71,19 +155,14 @@ class PostServiceImplTest {
 
     // Reusable method for T-0005 good case
     private void verifyOrderTypeExists(DateOrderType order) {
-        // Arrange
-        Integer customerId = 101;
-
-        Customer customer = new Customer(new User(customerId, "Roberto"));
 
         // Act
-        Mockito.when(usersService.checkAndGetCustomer(customerId)).thenReturn(customer);
+        Mockito.when(usersService.checkAndGetCustomer(customer.getUser().getUserId())).thenReturn(customer);
 
-        FollowedProductsResponseDTO response = this.postService.getFollowedProductsList(customerId, order.toString());
+        FollowedProductsResponseDTO response = this.postService.getFollowedProductsList(customer.getUser().getUserId(), order.toString());
 
         // Assert
         assertNotNull(response);
-        assertDoesNotThrow(() -> BadRequestException.class);
     }
 
     // Order by date unit tests - T-0005 -------------------END
@@ -94,26 +173,7 @@ class PostServiceImplTest {
     void verifyCorrectOrderAscByDate() {
         // Arrange
         // Creating the possible response
-        List<PostResponseDTO> postsResponse = List.of(
-                new PostResponseDTO(101, 1, "8-05-2024",
-                        new ProductDTO(
-                                2,
-                                "Silla Interior",
-                                "Exterior",
-                                "Racer",
-                                "Red and Black",
-                                ""
-                        ), 1, 220.8),
-                new PostResponseDTO(101, 0, "10-05-2024",
-                        new ProductDTO(
-                                1,
-                                "Silla exterior",
-                                "Exterior",
-                                "Racer",
-                                "Red and Black",
-                                ""
-                        ), 1, 120.1)
-        );
+        List<PostResponseDTO> postsResponse = List.of(postResponseDTO_1, postResponseDTO_2);
 
         // Assert
         this.verifyCorrectOrderByDate(postsResponse, DateOrderType.DATE_ASC);
@@ -124,26 +184,7 @@ class PostServiceImplTest {
     void verifyCorrectOrderDescByDate() {
         // Arrange
         // Creating the possible response
-        List<PostResponseDTO> postsResponse = List.of(
-        new PostResponseDTO(101, 0, "10-05-2024",
-            new ProductDTO(
-                    1,
-                    "Silla exterior",
-                    "Exterior",
-                    "Racer",
-                    "Red and Black",
-                    ""
-            ), 1, 120.1),
-            new PostResponseDTO(101, 1, "8-05-2024",
-                    new ProductDTO(
-                            2,
-                            "Silla Interior",
-                            "Exterior",
-                            "Racer",
-                            "Red and Black",
-                            ""
-                    ), 1, 220.8)
-        );
+        List<PostResponseDTO> postsResponse = List.of(postResponseDTO_2, postResponseDTO_1);
 
         // Assert
         this.verifyCorrectOrderByDate(postsResponse, DateOrderType.DATE_DESC);
@@ -153,43 +194,16 @@ class PostServiceImplTest {
     private void verifyCorrectOrderByDate(List<PostResponseDTO> postsResponse, DateOrderType order) {
         // Arrange
         // Customer
-        Integer customerId = 101;
-        Customer customer = new Customer(new User(customerId, "Roberto"));
         customer.setFollowed(List.of(1));
 
-        // Seller
-        Integer sellerId = 1;
-        List<Post> posts = List.of(
-            new Post(
-                new Product(
-                        1,
-                        "Silla exterior",
-                        "Exterior",
-                        "Racer",
-                        "Red and Black",
-                        ""
-                ), LocalDate.of(2024, 5,10), 1, 120.1
-            ),
-            new Post(
-                new Product(
-                        2,
-                        "Silla Interior",
-                        "Exterior",
-                        "Racer",
-                        "Red and Black",
-                        ""
-                ), LocalDate.of(2024, 5, 8), 1, 220.8
-            )
-        );
-
         // Act
-        Mockito.when(usersService.checkAndGetCustomer(customerId)).thenReturn(customer);
-        Mockito.when(postRepository.findBySellerId(sellerId)).thenReturn(posts);
+        Mockito.when(usersService.checkAndGetCustomer(customer.getUser().getUserId())).thenReturn(customer);
+        Mockito.when(postRepository.findBySellerId(seller.getUser().getUserId())).thenReturn(posts);
 
-        FollowedProductsResponseDTO response = this.postService.getFollowedProductsList(customerId, order.toString());
+        FollowedProductsResponseDTO response = this.postService.getFollowedProductsList(customer.getUser().getUserId(), order.toString());
 
         // Assertion
-        assertEquals(2, response.getPosts().size());
+        assertEquals(posts.size(), response.getPosts().size());
         assertEquals(postsResponse, response.getPosts());
     }
     // -------------------------- T-0006 -------------------END
@@ -199,46 +213,26 @@ class PostServiceImplTest {
     @Test
     @DisplayName("Get posts from last two weeks")
     void getPostsFromLastTwoWeeks() {
-        Integer customerId = 101;
-        Integer sellerId = 1;
         String order = "date_desc";
 
-        List<Post> posts = List.of(
-                new Post(
-                        new Product(
-                                1,
-                                "Silla exterior",
-                                "Exterior",
-                                "Racer",
-                                "Red and Black",
-                                ""
-                        ), LocalDate.now().minusWeeks(1), 1, 120.1
-                )
-        );
-
-        Customer customer = new Customer(new User(customerId, "Roberto"));
-        Seller seller = new Seller(new User(sellerId, "Martin"));
-
-        Mockito.when(usersService.checkAndGetCustomer(customerId)).thenReturn(customer);
+        Mockito.when(usersService.checkAndGetCustomer(customer.getUser().getUserId())).thenReturn(customer);
 
         customer.setFollowed(List.of(1));
 
-        Mockito.when(postRepository.findBySellerId(sellerId)).thenReturn(posts);
+        Mockito.when(postRepository.findBySellerId(seller.getUser().getUserId())).thenReturn(postsLastTwoWeeks);
 
         // Act
-        FollowedProductsResponseDTO response = this.postService.getFollowedProductsList(customerId, order);
-
+        FollowedProductsResponseDTO response = this.postService.getFollowedProductsList(customer.getUser().getUserId(), order);
 
         // Assert
-        assertEquals(1, response.getPosts().size());
+        assertEquals(postsLastTwoWeeks.size(), response.getPosts().size());
 
     }
 
     @Test
     @DisplayName("NOT Get posts from beyond two weeks")
     void notGetPostsFromBeyondTwoWeeks() {
-        Integer customerId = 101;
-        Integer sellerId = 1;
+
         String order = "date_desc";
 
         List<Post> posts = List.of(
@@ -254,24 +248,20 @@ class PostServiceImplTest {
                 )
         );
 
-        Customer customer = new Customer(new User(customerId, "Roberto"));
-        Seller seller = new Seller(new User(sellerId, "Martin"));
-
-        Mockito.when(usersService.checkAndGetCustomer(customerId)).thenReturn(customer);
+        Mockito.when(usersService.checkAndGetCustomer(customer.getUser().getUserId())).thenReturn(customer);
 
         customer.setFollowed(List.of(1));
 
-        Mockito.when(postRepository.findBySellerId(sellerId)).thenReturn(posts);
+        Mockito.when(postRepository.findBySellerId(seller.getUser().getUserId())).thenReturn(posts);
 
         // Act
-        FollowedProductsResponseDTO response = this.postService.getFollowedProductsList(customerId, order);
+        FollowedProductsResponseDTO response = this.postService.getFollowedProductsList(customer.getUser().getUserId(), order);
 
 
         // Assert
         assertEquals(0, response.getPosts().size());
 
     }
-
     // Last two weeks posts unit tests - T-0008 -----------------END
 
 }
