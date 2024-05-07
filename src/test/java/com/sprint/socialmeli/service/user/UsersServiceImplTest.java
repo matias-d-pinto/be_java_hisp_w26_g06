@@ -5,6 +5,7 @@ import com.sprint.socialmeli.dto.user.FollowedResponseDTO;
 import com.sprint.socialmeli.dto.user.FollowersResponseDTO;
 import com.sprint.socialmeli.dto.user.UserResponseDTO;
 import com.sprint.socialmeli.entity.Customer;
+import com.sprint.socialmeli.entity.IUser;
 import com.sprint.socialmeli.entity.Seller;
 import com.sprint.socialmeli.entity.User;
 import com.sprint.socialmeli.exception.BadRequestException;
@@ -23,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.reflect.Executable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Arrays;
@@ -42,8 +44,9 @@ class UsersServiceImplTest {
 
     Seller seller;
     Customer customer;
-    List<Customer> customerList;
-    List<Seller> sellerList;
+    List<IUser> customerList;
+    List<IUser> sellerList;
+
     @BeforeEach
     void setUp() {
         Integer sellerId = 1;
@@ -116,7 +119,8 @@ class UsersServiceImplTest {
         // Act & Assert
         Mockito.when(usersRepository.findCustomerById(customer.getUser().getUserId())).thenReturn(customer);
 
-        assertThrows(NotFoundException.class, () -> usersService.unfollow(customer.getUser().getUserId(), seller.getUser().getUserId()));
+        assertThrows(NotFoundException.class, () -> usersService
+                .unfollow(customer.getUser().getUserId(), seller.getUser().getUserId()));
     }
     // User to unfollow should exists - T-0002 -----------------END
 
@@ -152,7 +156,7 @@ class UsersServiceImplTest {
         // Act
         Mockito.when(
                 usersRepository.findCustomerByPredicate(ArgumentMatchers.any())
-        ).thenReturn(customerList);
+        ).thenReturn(getCustomerList());
 
         Mockito.when(usersRepository.findSellerById(seller.getUser().getUserId())).thenReturn(seller);
 
@@ -180,40 +184,6 @@ class UsersServiceImplTest {
         testFollowersAreCorrectlyOrdered(null);
     }
 
-    private void testFollowersAreCorrectlyOrdered(NameOrderType order) {
-        //Arrange
-
-        if (order != null) {
-            if (order.equals(NameOrderType.NAME_ASC)) {
-                customerList.sort(Comparator.comparing(customer -> customer.getUser().getUserName()));
-            } else if (order.equals(NameOrderType.NAME_DESC)) {
-                customerList.sort(Comparator.comparing(customer -> customer.getUser().getUserName(), Comparator.reverseOrder()));
-            }
-        }
-
-        List<UserResponseDTO> expected = customerList
-                .stream()
-                .map(UserMapper::mapCustomerToUserResponseDto)
-                .toList();
-
-        Mockito.when(
-                usersRepository.findCustomerByPredicate(ArgumentMatchers.any())
-        ).thenReturn(customerList);
-
-        Mockito.when(usersRepository.findSellerById(seller.getUser().getUserId())).thenReturn(seller);
-
-        //Act
-        FollowersResponseDTO followersResponseDTO;
-        if( order != null ) {
-            followersResponseDTO = usersService.getFollowers(seller.getUser().getUserId(), order.name());
-        }else{
-            followersResponseDTO = usersService.getFollowers(seller.getUser().getUserId(), null);
-        }
-
-        //Assert
-        Assertions.assertEquals(expected, followersResponseDTO.getFollowers());
-    }
-
     @Test
     @DisplayName("Order type 'name_asc' returns followed list ordered descending by name")
     public void testOrderFollowedAscending() {
@@ -232,25 +202,33 @@ class UsersServiceImplTest {
         testFollowedAreCorrectlyOrdered(null);
     }
 
-    private void testFollowedAreCorrectlyOrdered(NameOrderType order) {
-        //Arrange
+    private void testFollowersAreCorrectlyOrdered(NameOrderType order) {
+        List<UserResponseDTO> expected = arrangeOrderTests(customerList, order);
 
-        if (order != null) {
-            if (order.name().equalsIgnoreCase(NameOrderType.NAME_ASC.name())) {
-                sellerList.sort(Comparator.comparing(customer -> customer.getUser().getUserName()));
-            } else if (order.name().equalsIgnoreCase(NameOrderType.NAME_DESC.name())) {
-                sellerList.sort(Comparator.comparing(customer -> customer.getUser().getUserName(), Comparator.reverseOrder()));
-            }
+        Mockito.when(
+                usersRepository.findCustomerByPredicate(ArgumentMatchers.any())
+        ).thenReturn(getCustomerList());
+
+        Mockito.when(usersRepository.findSellerById(seller.getUser().getUserId())).thenReturn(seller);
+
+        //Act
+        FollowersResponseDTO followersResponseDTO;
+        if( order != null ) {
+            followersResponseDTO = usersService.getFollowers(seller.getUser().getUserId(), order.name());
+        }else{
+            followersResponseDTO = usersService.getFollowers(seller.getUser().getUserId(), null);
         }
 
-        List<UserResponseDTO> expected = sellerList
-                .stream()
-                .map(UserMapper::mapSellerToUserResponseDto)
-                .toList();
+        //Assert
+        Assertions.assertEquals(expected, followersResponseDTO.getFollowers());
+    }
+
+    private void testFollowedAreCorrectlyOrdered(NameOrderType order) {
+        List<UserResponseDTO> expected = arrangeOrderTests(sellerList, order);
 
         Mockito.when(
                 usersRepository.findSellerByPredicate(ArgumentMatchers.any())
-        ).thenReturn(sellerList);
+        ).thenReturn(getSellerList());
 
         Mockito.when(usersRepository.findCustomerById(customer.getUser().getUserId())).thenReturn(customer);
 
@@ -266,6 +244,32 @@ class UsersServiceImplTest {
         Assertions.assertEquals(expected, followedResponseDTO.getFollowed());
     }
 
+    private List<UserResponseDTO> arrangeOrderTests(List<IUser> users,
+                                                    NameOrderType order){
+        //Arrange
+        if (order != null) {
+            if (order.equals(NameOrderType.NAME_ASC)) {
+                users.sort(Comparator.comparing(customer -> customer.getUser().getUserName()));
+            } else if (order.equals(NameOrderType.NAME_DESC)) {
+                users.sort(Comparator
+                        .comparing(customer -> customer.getUser().getUserName(), Comparator.reverseOrder()));
+            }
+        }
+
+        return users
+                .stream()
+                .map(UserMapper::mapUserToUserResponseDto)
+                .toList();
+    }
+
+    private List<Customer> getCustomerList() {
+        return customerList.stream().map(customerUser -> (Customer) customerUser).toList();
+    }
+
+    private List<Seller> getSellerList() {
+        return sellerList.stream().map(sellerUser -> (Seller) sellerUser).toList();
+    }
+
     // Order by name unit tests - T-0004 -------------------END
 
 
@@ -277,7 +281,7 @@ class UsersServiceImplTest {
         Mockito.when(usersRepository.findSellerById(seller.getUser().getUserId())).thenReturn(seller);
         Mockito.when(
                 usersRepository.findCustomerByPredicate(ArgumentMatchers.any())
-        ).thenReturn(customerList);
+        ).thenReturn(getCustomerList());
         //Act
         FollowerCountResponseDTO countDTO = usersService.getFollowersCount(seller.getUser().getUserId());
 
