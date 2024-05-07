@@ -1,10 +1,12 @@
 package com.sprint.socialmeli.dto.post;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.io.Serializable;
 
 @Getter
+@EqualsAndHashCode
 public class PostResponseDTO extends PostDTO implements Serializable {
     private final Integer post_id;
 

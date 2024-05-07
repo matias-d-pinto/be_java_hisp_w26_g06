@@ -2,6 +2,7 @@ package com.sprint.socialmeli.dto.post;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.hibernate.validator.constraints.Length;
 
@@ -9,6 +10,7 @@ import java.io.Serializable;
 
 @Getter
 @AllArgsConstructor
+@EqualsAndHashCode
 public class ProductDTO implements Serializable {
 
     @NotNull(message = "El campo product_id no puede estar vacío")
