@@ -7,6 +7,8 @@ import com.sprint.socialmeli.entity.Customer;
 import com.sprint.socialmeli.entity.Post;
 import com.sprint.socialmeli.entity.Product;
 import com.sprint.socialmeli.entity.User;
+import com.sprint.socialmeli.entity.*;
+
 import com.sprint.socialmeli.exception.BadRequestException;
 import com.sprint.socialmeli.repository.post.IPostRepository;
 import com.sprint.socialmeli.service.user.IUsersService;
@@ -18,9 +20,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.time.LocalDate;
 import java.util.List;
+
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -191,5 +193,85 @@ class PostServiceImplTest {
         assertEquals(postsResponse, response.getPosts());
     }
     // -------------------------- T-0006 -------------------END
+
+    // Last two weeks posts unit tests - T-0008 -----------------START
+
+    @Test
+    @DisplayName("Get posts from last two weeks")
+    void getPostsFromLastTwoWeeks() {
+        Integer customerId = 101;
+        Integer sellerId = 1;
+        String order = "date_desc";
+
+        List<Post> posts = List.of(
+                new Post(
+                        new Product(
+                                1,
+                                "Silla exterior",
+                                "Exterior",
+                                "Racer",
+                                "Red and Black",
+                                ""
+                        ), LocalDate.now().minusWeeks(1), 1, 120.1
+                )
+        );
+
+        Customer customer = new Customer(new User(customerId, "Roberto"));
+        Seller seller = new Seller(new User(sellerId, "Martin"));
+
+        Mockito.when(usersService.checkAndGetCustomer(customerId)).thenReturn(customer);
+
+        customer.setFollowed(List.of(1));
+
+        Mockito.when(postRepository.findBySellerId(sellerId)).thenReturn(posts);
+
+        // Act
+        FollowedProductsResponseDTO response = this.postService.getFollowedProductsList(customerId, order);
+
+
+        // Assert
+        assertEquals(1, response.getPosts().size());
+
+    }
+
+    @Test
+    @DisplayName("NOT Get posts from beyond two weeks")
+    void notGetPostsFromBeyondTwoWeeks() {
+        Integer customerId = 101;
+        Integer sellerId = 1;
+        String order = "date_desc";
+
+        List<Post> posts = List.of(
+                new Post(
+                        new Product(
+                                1,
+                                "Silla exterior",
+                                "Exterior",
+                                "Racer",
+                                "Red and Black",
+                                ""
+                        ), LocalDate.now().minusWeeks(3), 1, 120.1
+                )
+        );
+
+        Customer customer = new Customer(new User(customerId, "Roberto"));
+        Seller seller = new Seller(new User(sellerId, "Martin"));
+
+        Mockito.when(usersService.checkAndGetCustomer(customerId)).thenReturn(customer);
+
+        customer.setFollowed(List.of(1));
+
+        Mockito.when(postRepository.findBySellerId(sellerId)).thenReturn(posts);
+
+        // Act
+        FollowedProductsResponseDTO response = this.postService.getFollowedProductsList(customerId, order);
+
+
+        // Assert
+        assertEquals(0, response.getPosts().size());
+
+    }
+
+    // Last two weeks posts unit tests - T-0008 -----------------END
 
 }
