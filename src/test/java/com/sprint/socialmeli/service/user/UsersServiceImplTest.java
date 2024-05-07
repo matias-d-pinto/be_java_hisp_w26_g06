@@ -85,11 +85,6 @@ class UsersServiceImplTest {
                 new Customer(new User(102, "Nicolas"))
         );
 
-        List<UserResponseDTO> usersDto = customerList
-                .stream()
-                .map(UserMapper::mapCustomerToUserResponseDto)
-                .toList();
-
         Seller seller = new Seller(new User(1, "Tesla X"));
 
         Mockito.when(
@@ -120,10 +115,6 @@ class UsersServiceImplTest {
                 new Customer(new User(102, "Nicolas"))
         );
 
-        List<UserResponseDTO> usersDto = customerList
-                .stream()
-                .map(UserMapper::mapCustomerToUserResponseDto)
-                .toList();
         //END SETUP
 
         Mockito.when(usersRepository.findSellerById(sellerId)).thenReturn(seller);
