@@ -94,7 +94,7 @@ public class UsersServiceImpl implements IUsersService {
 
         List<UserResponseDTO> followed = followedSellers
                 .stream()
-                .map(UserMapper::mapSellerToUserResponseDto)
+                .map(UserMapper::mapUserToUserResponseDto)
                 .collect(Collectors.toList());
 
         if (order != null) {
@@ -127,7 +127,7 @@ public class UsersServiceImpl implements IUsersService {
         List<Customer> followers = usersRepository.findCustomerByPredicate(c -> c.getFollowed().contains(sellerId));
         List<UserResponseDTO> usersDto = followers
                 .stream()
-                .map(UserMapper::mapCustomerToUserResponseDto)
+                .map(UserMapper::mapUserToUserResponseDto)
                 .toList();
 
         if (orderType != null) {

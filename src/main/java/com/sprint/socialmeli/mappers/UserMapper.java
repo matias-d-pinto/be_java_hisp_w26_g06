@@ -5,7 +5,9 @@ import com.sprint.socialmeli.dto.user.FollowerCountResponseDTO;
 import com.sprint.socialmeli.dto.user.FollowersResponseDTO;
 import com.sprint.socialmeli.dto.user.UserResponseDTO;
 import com.sprint.socialmeli.entity.Customer;
+import com.sprint.socialmeli.entity.IUser;
 import com.sprint.socialmeli.entity.Seller;
+import com.sprint.socialmeli.entity.User;
 
 import java.util.List;
 
@@ -46,6 +48,13 @@ public class UserMapper {
         return new UserResponseDTO(
                 customer.getUser().getUserId(),
                 customer.getUser().getUserName()
+        );
+    }
+
+    public static UserResponseDTO mapUserToUserResponseDto(IUser user){
+        return new UserResponseDTO(
+                user.getUser().getUserId(),
+                user.getUser().getUserName()
         );
     }
 }

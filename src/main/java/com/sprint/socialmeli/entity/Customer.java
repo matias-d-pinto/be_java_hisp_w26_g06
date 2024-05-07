@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class Customer {
+public class Customer implements IUser {
     private List<Integer> followed = new ArrayList<>();
     private User user;
 
