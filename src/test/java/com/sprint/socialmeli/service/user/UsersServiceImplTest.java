@@ -7,6 +7,7 @@ import com.sprint.socialmeli.entity.Customer;
 import com.sprint.socialmeli.entity.Seller;
 import com.sprint.socialmeli.entity.User;
 import com.sprint.socialmeli.exception.BadRequestException;
+import com.sprint.socialmeli.exception.NotFoundException;
 import com.sprint.socialmeli.mappers.UserMapper;
 import com.sprint.socialmeli.repository.user.IUsersRepository;
 import org.junit.jupiter.api.Assertions;
@@ -22,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,6 +36,43 @@ class UsersServiceImplTest {
 
     @InjectMocks
     UsersServiceImpl usersService;
+
+
+    // Verify user to follow exists - T-0001
+
+    // ------ Good case ------
+    @Test
+    @DisplayName("User to follow exist")
+    public void userToFollowExist() {
+        // Arrange
+        Integer customerId = 101;
+        Integer sellerId = 1;
+        Seller seller = new Seller(new User(sellerId, "Tesla 2"));
+        Customer customer = new Customer(new User(customerId, "Tesla 1"));
+
+        // Act and Assert
+        Mockito.when(usersRepository.findSellerById(sellerId)).thenReturn(seller);
+        Mockito.when(usersRepository.findCustomerById(customerId)).thenReturn(customer);
+
+        assertDoesNotThrow(() -> usersService.follow(customerId, sellerId));
+    }
+
+    // ------ Bad case ------
+    @Test
+    @DisplayName("User to follow does not exist")
+    public void userToFollowDoesNotExist() {
+        // Arrange
+        Integer customerId = 101;
+        Integer sellerId = 1;
+        Customer customer = new Customer(new User(customerId, "Tesla 1"));
+
+        // Act and Assert
+        Mockito.when(usersRepository.findSellerById(sellerId)).thenReturn(null);
+        Mockito.when(usersRepository.findCustomerById(customerId)).thenReturn(customer);
+
+        assertThrows(NotFoundException.class, () -> usersService.follow(customerId, sellerId));
+    }
+
 
     // Order by name unit tests - T-0003 -----------------START
 
@@ -221,4 +260,49 @@ class UsersServiceImplTest {
         testFollowedAreCorrectlyOrdered("name_asc");
     }
     // Order by name unit tests - T-0004 -------------------END
+
+    // User to unfollow should exists - T-0002 -----------------START
+
+    // Good case - Normal flow
+    @Test
+    @DisplayName("User to unfollow should exists")
+    public void userToUnfollowExist(){
+        // Arrange
+        int sellerId = 1;
+        int customerId = 101;
+
+        // Mock of the seller
+        Seller existingSeller = new Seller(new User(sellerId, "Roman"));
+
+        // Mock of the customer who already follows the seller
+        Customer existingCustomer = new Customer(new User(101, "Damian"));
+        existingCustomer.setFollowed(new ArrayList<>(Arrays.asList(sellerId)));
+
+        // Act & Assert
+        Mockito.when(usersRepository.findSellerById(sellerId)).thenReturn(existingSeller);
+        Mockito.when(usersRepository.findCustomerById(customerId)).thenReturn(existingCustomer);
+
+        assertDoesNotThrow(() -> usersService.unfollow(101, 1));
+    }
+
+    // Bad case - Follower does not exist
+    @Test
+    @DisplayName("User to unfollow should exists")
+    public void userToUnfollowDoesNotExist(){
+        // Arrange
+        int sellerId = 1;
+        int customerId = 101;
+
+        // Mock of the seller
+        Mockito.when(usersRepository.findSellerById(sellerId)).thenReturn(null);
+
+        // Mock of the customer who already follows the seller
+        Customer existingCustomer = new Customer(new User(101, "Damian"));
+        existingCustomer.setFollowed(new ArrayList<>(Arrays.asList(sellerId)));
+
+        // Act & Assert
+        Mockito.when(usersRepository.findCustomerById(customerId)).thenReturn(existingCustomer);
+
+        assertThrows(NotFoundException.class, () -> usersService.unfollow(101, 1));
+    }
 }
