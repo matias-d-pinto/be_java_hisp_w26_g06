@@ -156,10 +156,8 @@ class UsersServiceImplTest {
 
         Mockito.when(usersRepository.findSellerById(seller.getUser().getUserId())).thenReturn(seller);
 
-        usersService.getFollowers(seller.getUser().getUserId(), order.name());
-
         // Assert
-        assertDoesNotThrow(() -> new BadRequestException("Invalid order type: " + order));
+        assertDoesNotThrow(() -> usersService.getFollowers(seller.getUser().getUserId(), order.name()));
     }
     // Order by name unit tests - T-0003 -------------------END
 
