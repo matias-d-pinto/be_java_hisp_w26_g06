@@ -18,6 +18,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -141,4 +143,50 @@ class UsersServiceImplTest {
     }
     // Order by name unit tests - T-0003 -------------------END
 
+
+    // User to unfollow should exists - T-0002 -----------------START
+
+    // Good case - Normal flow
+    @Test
+    @DisplayName("User to unfollow should exists")
+    public void userToUnfollowExist(){
+        // Arrange
+        int sellerId = 1;
+        int customerId = 101;
+
+        // Mock of the seller
+        Seller existingSeller = new Seller(new User(sellerId, "Roman"));
+
+        // Mock of the customer who already follows the seller
+        Customer existingCustomer = new Customer(new User(101, "Damian"));
+        existingCustomer.setFollowed(new ArrayList<>(Arrays.asList(sellerId)));
+
+        // Act & Assert
+        Mockito.when(usersRepository.findSellerById(sellerId)).thenReturn(existingSeller);
+        Mockito.when(usersRepository.findCustomerById(customerId)).thenReturn(existingCustomer);
+
+        assertDoesNotThrow(() -> usersService.unfollow(101, 1));
+    }
+
+    // Bad case - Follower does not exist
+    @Test
+    @DisplayName("User to unfollow should exists")
+    public void userToUnfollowDoesNotExist(){
+        // Arrange
+        int sellerId = 1;
+        int customerId = 101;
+
+        // Mock of the seller
+        Seller existingSeller = new Seller(new User(sellerId, "Roman"));
+        Mockito.when(usersRepository.findSellerById(sellerId)).thenReturn(null);
+
+        // Mock of the customer who already follows the seller
+        Customer existingCustomer = new Customer(new User(101, "Damian"));
+        existingCustomer.setFollowed(new ArrayList<>(Arrays.asList(sellerId)));
+
+        // Act & Assert
+        Mockito.when(usersRepository.findCustomerById(customerId)).thenReturn(existingCustomer);
+
+        assertThrows(NotFoundException.class, () -> usersService.unfollow(101, 1));
+    }
 }
