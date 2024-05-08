@@ -15,6 +15,7 @@ import com.sprint.socialmeli.utils.DateOrderType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static com.sprint.socialmeli.mappers.PostMapper.mapPostToPostResponseDto;
@@ -90,10 +91,13 @@ public class PostServiceImpl implements IPostService {
     private List<PostResponseDTO> sortList(List<PostResponseDTO> dtos, DateOrderType orderType){
         return switch (orderType) {
             case DATE_ASC -> dtos.stream()
-                    .sorted(Comparator.comparing(PostResponseDTO::getDate))
+                    .sorted(Comparator.comparing(dto ->
+                            LocalDate.parse(dto.getDate(), DateTimeFormatter.ofPattern("dd-MM-yyyy"))))
                     .toList();
             case DATE_DESC -> dtos.stream()
-                    .sorted(Comparator.comparing(PostResponseDTO::getDate, Collections.reverseOrder()))
+                    .sorted(Comparator.comparing(dto ->
+                            LocalDate.parse(dto.getDate(), DateTimeFormatter.ofPattern("dd-MM-yyyy")),
+                            Collections.reverseOrder()))
                     .toList();
             default -> dtos;
         };

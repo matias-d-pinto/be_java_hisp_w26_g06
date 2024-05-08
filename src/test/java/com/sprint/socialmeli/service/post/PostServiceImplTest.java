@@ -243,7 +243,7 @@ class PostServiceImplTest {
         Mockito.when(postRepository.findBySellerId(seller.getUser().getUserId())).thenReturn(posts);
 
         FollowedProductsResponseDTO response = this.postService
-                .getFollowedProductsList(customer.getUser().getUserId(), order.toString());
+                .getFollowedProductsList(customer.getUser().getUserId(), order.name());
 
         // Assertion
         assertEquals(posts.size() - 1, response.getPosts().size()); // -1 due to 1 being more than 2 weeks
